@@ -1,7 +1,7 @@
 <?php 
-    
+    echo hash('sha256', 's');
 ?>
-<div class = >
+<div>
     <h1>Form</h1>
 
     <form action = "requests_processing.php" method = "post">
