@@ -31,21 +31,21 @@ function validateMessage($name) {
 }
 
 if ($_SERVER['REQUEST_METHOD'] === 'POST'){
-    if (!validatePassword($_POST['mode'])){
+    if (array_key_exists('mode', $_POST) && !validatePassword($_POST['mode'])){
         echo "<script>
                 alert('Недопустимые символы в поле \"Mode\". Разрешены только латинские буквы, цифры, и спец символы');
                 window.location.href = 'index.html';
             </script>";
         exit;
     }
-    if (!validatePassword($_POST['password'])){
+    if (array_key_exists('password', $_POST) && !validatePassword($_POST['password'])){
         echo "<script>
                 alert('Недопустимые символы в поле \"Password\". Разрешены только латинские буквы, цифры, и спец символы');
                 window.location.href = 'index.html';
             </script>";
         exit;
     }
-    if (!validateMessage($_POST['message'])){
+    if (array_key_exists('message', $_POST) && !validateMessage($_POST['message'])){
         echo "<script>
                 alert('Недопустимые символы в поле \"Message\". Разрешены только буквы кириллицы');
                 window.location.href = 'index.html';
