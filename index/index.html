@@ -1,0 +1,22 @@
+<!DOCTYPE html>
+<html>
+    <head>
+        <meta charset="UTF-8">
+        <link rel="stylesheet" href="styles.css">
+        <title>Панель управления</title>
+    </head>
+    <body>
+        <div>
+            <form action = "requests_processing.php" method = "post">
+                <input type ="hidden" name = "mode" value = "post_message"/>
+                <p>Пароль (a-z, A-Z, 0-9, спецсимволы)</p>
+                <input type= "password" name = "password" placeholder = "Пароль"/><br>
+                <p>Сообщение (а-я, А-Я)</p>
+                <textarea name = "message" placeholder = "Сообщение"></textarea><br>
+                
+                <input type="submit" value = "Enter"/>
+            </form>
+        </div>
+    </body>
+</html>
+

@@ -21,34 +21,34 @@ function sendPostToSelf($data) {
 }
 
 function validatePassword($username) {
-    // Только буквы, цифры, и спец символы
+    // Только латиница, цифры, и спец символы
     return preg_match('/^[a-zA-Z0-9!@#$%^&*()_+\-=\[\]{};:,.?\/\\|`~]+$/', $username);
 }
 
 function validateMessage($name) {
-    // Только кириллица (строчные)
-    return preg_match('/^[а-яё]+$/u', $name);
+    // Только кириллица
+    return preg_match('/^[а-яёА-ЯЁ]+$/u', $name);
 }
 
 if ($_SERVER['REQUEST_METHOD'] === 'POST'){
     if (!validatePassword($_POST['mode'])){
         echo "<script>
                 alert('Недопустимые символы в поле \"Mode\". Разрешены только латинские буквы, цифры, и спец символы');
-                window.location.href = 'index.php';
+                window.location.href = 'index.html';
             </script>";
         exit;
     }
     if (!validatePassword($_POST['password'])){
         echo "<script>
                 alert('Недопустимые символы в поле \"Password\". Разрешены только латинские буквы, цифры, и спец символы');
-                window.location.href = 'index.php';
+                window.location.href = 'index.html';
             </script>";
         exit;
     }
     if (!validateMessage($_POST['message'])){
         echo "<script>
-                alert('Недопустимые символы в поле \"Message\". Разрешены только строчные буквы кириллицы');
-                window.location.href = 'index.php';
+                alert('Недопустимые символы в поле \"Message\". Разрешены только буквы кириллицы');
+                window.location.href = 'index.html';
             </script>";
         exit;
     }
@@ -57,7 +57,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST'){
     $password_hash = hash('sha256', $password);
 
     if ($mode === 'post_message'){
-        $message = htmlspecialchars($_POST['message']);
+        $message = htmlspecialchars(mb_strtolower($_POST['message'], 'UTF-8'));
         
         if ($password_hash === PASSWORD_HASH){
             $message_data = [
@@ -68,12 +68,12 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST'){
             $json_string = json_encode($message_data, JSON_PRETTY_PRINT | JSON_UNESCAPED_UNICODE);
             file_put_contents(MSG_FILE_NAME, $json_string);
 
-            header('Location: index.php');
+            header('Location: index.html');
             exit;
         } else {
             echo "<script>
                 alert('Неверный пароль!');
-                window.location.href = 'index.php';
+                window.location.href = 'index.html';
             </script>";
             exit;
         }
@@ -102,7 +102,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST'){
         }
     }
     else{
-        header('Location: index.php');
+        header('Location: index.html');
         exit;
     }
     
