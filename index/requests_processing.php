@@ -6,6 +6,7 @@ error_reporting(E_ALL);
 define('MSG_FILE_NAME', 'message.json');
 define('PASSWORD_HASH', '043a718774c572bd8a25adbeb1bfcd5c0256ae11cecf9f9c3f925d0e52beaf89');
 
+
 function sendPostToSelf($data) {
     $url = "http://" . $_SERVER['HTTP_HOST'] . $_SERVER['REQUEST_URI'];
     
@@ -19,13 +20,44 @@ function sendPostToSelf($data) {
     return $response;
 }
 
+function validatePassword($username) {
+    // Только буквы, цифры, и спец символы
+    return preg_match('/^[a-zA-Z0-9!@#$%^&*()_+\-=\[\]{};:,.?\/\\|`~]+$/', $username);
+}
+
+function validateMessage($name) {
+    // Только кириллица (строчные)
+    return preg_match('/^[а-яё]+$/u', $name);
+}
+
 if ($_SERVER['REQUEST_METHOD'] === 'POST'){
-    $mode = $_POST['mode'];
-    $password = $_POST['password'];
+    if (!validatePassword($_POST['mode'])){
+        echo "<script>
+                alert('Недопустимые символы в поле \"Mode\". Разрешены только латинские буквы, цифры, и спец символы');
+                window.location.href = 'index.php';
+            </script>";
+        exit;
+    }
+    if (!validatePassword($_POST['password'])){
+        echo "<script>
+                alert('Недопустимые символы в поле \"Password\". Разрешены только латинские буквы, цифры, и спец символы');
+                window.location.href = 'index.php';
+            </script>";
+        exit;
+    }
+    if (!validateMessage($_POST['message'])){
+        echo "<script>
+                alert('Недопустимые символы в поле \"Message\". Разрешены только строчные буквы кириллицы');
+                window.location.href = 'index.php';
+            </script>";
+        exit;
+    }
+    $mode = htmlspecialchars($_POST['mode']);
+    $password = htmlspecialchars($_POST['password']);
     $password_hash = hash('sha256', $password);
 
     if ($mode === 'post_message'){
-        $message = $_POST['message'];
+        $message = htmlspecialchars($_POST['message']);
         
         if ($password_hash === PASSWORD_HASH){
             $message_data = [
