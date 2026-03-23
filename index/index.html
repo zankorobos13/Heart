@@ -2,19 +2,21 @@
 <html>
     <head>
         <meta charset="UTF-8">
+        <meta name="viewport" content="width=device-width, initial-scale=1.0">
         <link rel="stylesheet" href="styles.css">
         <title>Панель управления</title>
     </head>
     <body>
         <div>
             <form action = "requests_processing.php" method = "post">
+                <h1>Панель управления</h1>
                 <input type ="hidden" name = "mode" value = "post_message"/>
                 <p>Пароль (a-z, A-Z, 0-9, спецсимволы)</p>
-                <input type= "password" name = "password" placeholder = "Пароль"/><br>
+                <input type= "password" name = "password" placeholder = "Пароль"/>
                 <p>Сообщение (а-я, А-Я)</p>
                 <textarea name = "message" placeholder = "Сообщение"></textarea><br>
                 
-                <input type="submit" value = "Enter"/>
+                <input type="submit" value = "Ввод"/>
             </form>
         </div>
     </body>
