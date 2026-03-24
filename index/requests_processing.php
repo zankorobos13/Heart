@@ -5,7 +5,51 @@ error_reporting(E_ALL);
 
 define('MSG_FILE_NAME', 'message.json');
 define('PASSWORD_HASH', '043a718774c572bd8a25adbeb1bfcd5c0256ae11cecf9f9c3f925d0e52beaf89');
+define('TO_MORZE', [
+    'а' => '.-',    'б' => '-...',  'в' => '.--',   'г' => '--.',
+    'д' => '-..',   'е' => '.',     'ё' => '.',     'ж' => '...-',
+    'з' => '--..',  'и' => '..',    'й' => '.---',  'к' => '-.-',
+    'л' => '.-..',  'м' => '--',    'н' => '-.',    'о' => '---',
+    'п' => '.--.',  'р' => '.-.',   'с' => '...',   'т' => '-',
+    'у' => '..-',   'ф' => '..-.',  'х' => '....',  'ц' => '-.-.',
+    'ч' => '---.',  'ш' => '----',  'щ' => '--.-',  'ъ' => '.--.-.',
+    'ы' => '-.--',  'ь' => '-..-',  'э' => '..-..', 'ю' => '..--',
+    'я' => '.-.-'
+]);
 
+function str_to_morze($text) {
+    $morze = '';
+    $chars = preg_split('//u', mb_strtolower($text, 'UTF-8'), -1, PREG_SPLIT_NO_EMPTY);
+    
+    foreach ($chars as $char) {
+        if ($char === ' ') {
+            $morze .= '   ';
+        } elseif (isset(TO_MORZE[$char])) {
+            $morze .= TO_MORZE[$char] . ' ';
+        }
+    }
+    
+    return $morze;
+}
+
+function morze_to_bin($text){
+    $bin = '';
+    $chars = str_split($text);
+
+    foreach ($chars as $char) {
+        if ($char === '.') {
+            $bin .= '1';
+        } elseif ($char === '-'){
+            $bin .= '111';
+        } elseif ($char === ' ') {
+            $bin .= '00';
+        }
+
+        $bin .= '0';
+    }
+    
+    return $bin;
+}
 
 function sendPostToSelf($data) {
     $url = "http://" . $_SERVER['HTTP_HOST'] . $_SERVER['REQUEST_URI'];
@@ -20,14 +64,14 @@ function sendPostToSelf($data) {
     return $response;
 }
 
-function validatePassword($username) {
+function validatePassword($password) {
     // Только латиница, цифры, и спец символы
-    return preg_match('/^[a-zA-Z0-9!@#$%^&*()_+\-=\[\]{};:,.?\/\\|`~]+$/', $username);
+    return preg_match('/^[a-zA-Z0-9!@#$%^&*()_+\-=\[\]{};:,.?\/\\|`~]+$/', $password);
 }
 
-function validateMessage($name) {
+function validateMessage($message) {
     // Только кириллица
-    return preg_match('/^[а-яёА-ЯЁ]+$/u', $name);
+    return preg_match('/^[А-Яа-яЁё\s+]+$/u', $message);
 }
 
 if ($_SERVER['REQUEST_METHOD'] === 'POST'){
@@ -52,13 +96,15 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST'){
             </script>";
         exit;
     }
-    $mode = htmlspecialchars($_POST['mode']);
-    $password = htmlspecialchars($_POST['password']);
+    $mode = htmlspecialchars($_POST['mode'], ENT_QUOTES, 'UTF-8');
+    $password = htmlspecialchars($_POST['password'], ENT_QUOTES, 'UTF-8');
     $password_hash = hash('sha256', $password);
 
     if ($mode === 'post_message'){
-        $message = htmlspecialchars(mb_strtolower($_POST['message'], 'UTF-8'));
-        
+        $message = htmlspecialchars(preg_replace('/[\t\n\r\f\v]+/u', '', mb_strtolower($_POST['message'], 'UTF-8')), ENT_QUOTES, 'UTF-8');
+        $message = str_to_morze($message);
+        $message = morze_to_bin($message);
+
         if ($password_hash === PASSWORD_HASH){
             $message_data = [
                 'is_readed' => false,
