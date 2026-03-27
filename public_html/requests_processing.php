@@ -99,6 +99,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST'){
     $mode = htmlspecialchars($_POST['mode'], ENT_QUOTES, 'UTF-8');
     $password = htmlspecialchars($_POST['password'], ENT_QUOTES, 'UTF-8');
     $password_hash = hash('sha256', $password);
+    $msg_file_path = __DIR__ . "/../config" . "/" . MSG_FILE_NAME;
 
     if ($mode === 'post_message'){
         $message = htmlspecialchars(preg_replace('/[\t\n\r\f\v]+/u', '', mb_strtolower($_POST['message'], 'UTF-8')), ENT_QUOTES, 'UTF-8');
@@ -112,7 +113,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST'){
             ];
 
             $json_string = json_encode($message_data, JSON_PRETTY_PRINT | JSON_UNESCAPED_UNICODE);
-            file_put_contents(MSG_FILE_NAME, $json_string);
+            file_put_contents($msg_file_path, $json_string);
 
             header('Location: index.html');
             exit;
@@ -125,7 +126,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST'){
         }
     } elseif ($mode === 'get_message') {
         if ($password_hash === PASSWORD_HASH){
-            $message_data = json_decode(file_get_contents(MSG_FILE_NAME), true);
+            $message_data = json_decode(file_get_contents($msg_file_path), true);
             $message = $message_data['message'];
 
             $response = [
@@ -137,7 +138,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST'){
 
             $message_data['is_readed'] = true;
             $json_string = json_encode($message_data, JSON_PRETTY_PRINT | JSON_UNESCAPED_UNICODE);
-            file_put_contents(MSG_FILE_NAME, $json_string);
+            file_put_contents($msg_file_path, $json_string);
             
             echo json_encode($response);
         } else {
