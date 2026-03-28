@@ -1,0 +1,10 @@
+# Полностью запрещаем HTTP-доступ к папке
+Require all denied
+
+# Даже если кто-то обойдет запрет, блокируем любые PHP-файлы
+<FilesMatch "\.(php|phtml|inc)$">
+    Require all denied
+</FilesMatch>
+
+# Дополнительно: запрещаем просмотр директории
+Options -Indexes
