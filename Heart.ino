@@ -1,27 +1,30 @@
 #include <ESP8266WiFi.h>
-#include <WiFiClient.h>
 #include <ESP8266WebServer.h>
+#include <LittleFS.h>
 #include "config.h"
+#include "server.h"
 
-WiFiData wifi_data;
-const char* SSID = wifi_data.SSID;
-const char* PASSWORD = wifi_data.PASSWORD;
-const char* SERVER_URL = wifi_data.SERVER_URL;
+ESP8266WebServer server(80);
+
+const char* ssid = "HEART"; 
+const char* password = "12345678";
 
 void setup() {
   Serial.begin(74880);
-  
-  WiFi.begin(SSID, PASSWORD);
-  
-  while (WiFi.status() != WL_CONNECTED) {
-    delay(500);
-    Serial.print(".");
+
+  if (!LittleFS.begin()) {
+    Serial.println("FS ERROR");
+    return;
   }
-  
-  Serial.println("");
-  Serial.println("WiFi подключен");
-  Serial.print("IP адрес: ");
-  Serial.println(WiFi.localIP());
+
+  WiFi.softAP(ssid, password);
+  Serial.println(WiFi.softAPIP());
+
+  setupRoutes(server);
+
+  server.begin();
 }
+
 void loop() {
+  server.handleClient();
 }
