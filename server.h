@@ -20,9 +20,34 @@ void handleFileRead(String path, ESP8266WebServer& server) {
   }
 }
 
+void handleSave(ESP8266WebServer& server) {
+  String ssid = server.arg("ssid");
+  String password = server.arg("password");
+
+  Serial.println("SSID: " + ssid);
+  Serial.println("PASS: " + password);
+
+  File file = LittleFS.open("/config.txt", "w");
+
+  if (!file) {
+    server.send(500, "text/plain", "File write error");
+    return;
+  }
+
+  file.println(ssid);
+  file.println(password);
+  file.close();
+
+  server.send(200, "text/html; charset=UTF-8", "<h2>Сохранено</h2><h3>SSID: " + ssid + "</h3><h3>PASSWORD:" + password + "</h3><a href='/'>Назад</a>");
+}
+
 void setupRoutes(ESP8266WebServer& server) {
   server.on("/", [&server]() {
     handleFileRead("/index.html", server);
+  });
+
+  server.on("/save", HTTP_POST,[&server](){
+    handleSave(server);
   });
 
   server.onNotFound([&server]() {

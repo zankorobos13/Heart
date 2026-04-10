@@ -1,7 +1,6 @@
 #include <ESP8266WiFi.h>
 #include <ESP8266WebServer.h>
 #include <LittleFS.h>
-#include "config.h"
 #include "server.h"
 
 ESP8266WebServer server(80);
@@ -16,6 +15,19 @@ void setup() {
     Serial.println("FS ERROR");
     return;
   }
+
+  File file = LittleFS.open("/config.txt", "r");
+
+  if (!file) {
+    Serial.println("Ошибка открытия файла");
+    return;
+  }
+
+  while (file.available()) {
+    Serial.write(file.read());
+  }
+
+  file.close();
 
   WiFi.softAP(ssid, password);
   Serial.println(WiFi.softAPIP());
