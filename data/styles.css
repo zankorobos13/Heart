@@ -5,128 +5,176 @@
 }
 
 body {
-    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
     min-height: 100vh;
     display: flex;
     justify-content: center;
     align-items: center;
-    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
+
     padding: 20px;
+
+    font-family: -apple-system,
+                 BlinkMacSystemFont,
+                 'Segoe UI',
+                 Roboto,
+                 Helvetica,
+                 Arial,
+                 sans-serif;
+
+    background: linear-gradient(
+        135deg,
+        #667eea 0%,
+        #764ba2 100%
+    );
 }
 
-div {
+.container {
     width: 100%;
-    max-width: 500px;
+    max-width: 520px;
+
     background: white;
+
     border-radius: 24px;
-    box-shadow: 0 20px 40px rgba(0, 0, 0, 0.1);
+
     padding: 32px;
+
+    box-shadow:
+        0 20px 40px rgba(0,0,0,.12);
+
+    display: flex;
+    flex-direction: column;
+    gap: 16px;
 }
 
 form {
     display: flex;
     flex-direction: column;
-    gap: 20px;
+    gap: 16px;
+}
+
+h1 {
+    text-align: center;
+    color: #333;
+
+    font-size: 28px;
+    font-weight: 600;
+
+    margin-bottom: 8px;
 }
 
 p {
+    color: #555;
+
     font-size: 14px;
     font-weight: 500;
-    color: #333;
-    margin-bottom: -12px;
 }
 
-h1{
-    text-align: center;
-    font-size: 28px;
-    font-weight: 500;
-    color: #333;
-    margin-bottom: -12px;
-}
-
-input[type="password"], input[type="text"] {
+input[type="text"],
+input[type="password"] {
     width: 100%;
+
     padding: 14px 16px;
-    font-size: 16px;
-    border: 1.5px solid #e0e0e0;
+
+    border: 1.5px solid #e2e8f0;
     border-radius: 12px;
-    font-family: inherit;
-    transition: all 0.2s ease;
+
     background: #fafafa;
-}
 
-input[type="password"]:focus,
-input[type="text"]:focus {
-    outline: none;
-    border-color: #667eea;
-    background: white;
-    box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1);
-}
-
-input[type="submit"] {
-    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-    color: white;
-    border: none;
-    padding: 14px 24px;
     font-size: 16px;
-    font-weight: 600;
-    border-radius: 12px;
-    cursor: pointer;
-    transition: all 0.2s ease;
-    margin-top: 10px;
+
+    transition: .2s;
 }
 
-input[type="submit"]:active {
-    transform: scale(0.98);
+input[type="text"]:focus,
+input[type="password"]:focus {
+    outline: none;
+
+    background: white;
+
+    border-color: #667eea;
+
+    box-shadow:
+        0 0 0 3px rgba(102,126,234,.12);
 }
 
 input::placeholder {
-    color: #999;
+    color: #9ca3af;
 }
 
-/* Мобильная адаптация */
-@media (max-width: 768px) {
-    body {
-        padding: 16px;
-    }
-    
-    div {
-        padding: 24px;
-        border-radius: 20px;
-    }
-    
-    form {
-        gap: 18px;
-    }
-    
-    input[type="password"],
-    input[type="text"] {
-        padding: 12px 14px;
-    }
+input[type="submit"] {
+    margin-top: 8px;
+
+    border: none;
+    border-radius: 12px;
+
+    padding: 14px;
+
+    font-size: 16px;
+    font-weight: 600;
+
+    color: white;
+
+    cursor: pointer;
+
+    background: linear-gradient(
+        135deg,
+        #667eea 0%,
+        #764ba2 100%
+    );
+
+    transition: .2s;
+}
+
+input[type="submit"]:hover {
+    transform: translateY(-1px);
+}
+
+input[type="submit"]:active {
+    transform: scale(.98);
+}
+
+.secondary-button {
+    display: block;
+
+    text-align: center;
+    text-decoration: none;
+
+    padding: 14px;
+
+    border-radius: 12px;
+
+    font-size: 15px;
+    font-weight: 600;
+
+    color: #667eea;
+
+    border: 2px solid #667eea;
+
+    transition: .2s;
+}
+
+.secondary-button:hover {
+    background: rgba(102,126,234,.08);
+}
+
+.secondary-button:active {
+    transform: scale(.98);
 }
 
 @media (max-width: 480px) {
-    div {
-        padding: 20px;
-        border-radius: 16px;
+
+    .container {
+        padding: 24px;
+        border-radius: 18px;
     }
-    
-    form {
-        gap: 16px;
+
+    h1 {
+        font-size: 24px;
     }
-    
-    p {
-        font-size: 13px;
-    }
-    
+
+    input[type="text"],
     input[type="password"],
-    input[type="text"] {
-        padding: 10px 12px;
-        font-size: 15px;
-    }
-    
-    input[type="submit"] {
-        padding: 12px 20px;
-        font-size: 15px;
+    input[type="submit"],
+    .secondary-button {
+        padding: 12px;
     }
 }
