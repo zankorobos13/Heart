@@ -6,8 +6,8 @@
 #include "LED.h"
 
 #define RED_LED_PIN 12
-#define BLUE_LED_PIN 14
-#define GREEN_LED_PIN 13
+#define BLUE_LED_PIN 13
+#define GREEN_LED_PIN 14
 
 #define BUTTON_PIN 4
 
@@ -92,6 +92,7 @@ void loop() {
     case Settings:
       red_led.Blink(3000, 500);
       green_led.Blink(3000, 500);
+      server.handleClient();
       break;
     default:
       break;
