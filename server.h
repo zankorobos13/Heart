@@ -1,7 +1,7 @@
 #include <LittleFS.h>
 
 bool IsSsidExists(const String& targetSsid) {
-    File file = LittleFS.open("/config.txt", "r");
+    File file = LittleFS.open("/wifi.txt", "r");
 
     if (!file) {
       return false;
@@ -72,7 +72,7 @@ void handleSave(ESP8266WebServer& server) {
   Serial.println("SSID: " + ssid);
   Serial.println("PASS: " + password);
 
-  File file = LittleFS.open("/config.txt", "a");
+  File file = LittleFS.open("/wifi.txt", "a");
 
   if (!file) {
     server.send(500, "text/plain", "File write error");
@@ -104,10 +104,10 @@ void handleDeleteItem(ESP8266WebServer& server) {
 
   int deleteIndex = server.arg("index").toInt();
 
-  File file = LittleFS.open("/config.txt", "r");
+  File file = LittleFS.open("/wifi.txt", "r");
 
   if (!file) {
-    server.send(500, "text/plain", "config.txt not found");
+    server.send(500, "text/plain", "wifi.txt not found");
     return;
   }
 
@@ -133,7 +133,7 @@ void handleDeleteItem(ESP8266WebServer& server) {
 
   file.close();
 
-  file = LittleFS.open("/config.txt", "w");
+  file = LittleFS.open("/wifi.txt", "w");
 
   if (!file) {
     server.send(500, "text/plain", "write error");
@@ -148,7 +148,7 @@ void handleDeleteItem(ESP8266WebServer& server) {
 }
 
 void handleDeletePage(ESP8266WebServer& server) {
-  File file = LittleFS.open("/config.txt", "r");
+  File file = LittleFS.open("/wifi.txt", "r");
 
   String html =
       "<html><head><meta charset='UTF-8'></head><body>"
@@ -188,6 +188,45 @@ void handleDeletePage(ESP8266WebServer& server) {
   server.send(200, "text/html; charset=UTF-8", html);
 }
 
+void handleConfigRead(ESP8266WebServer& server){
+  File file = LittleFS.open("/config.json", "r");
+  String content = file.readString();
+  file.close();
+
+  String html =
+    "<!DOCTYPE html>"
+    "<html>"
+    "<head>"
+    "<meta charset='UTF-8'>"
+    "<title>Редактирование config.json</title>"
+    "</head>"
+    "<body>"
+    "<div>"
+    "<form action='/saveConfig' method='POST'>"
+    "<textarea name='text' style='width:100%;height:300px;'>"
+    + content +
+    "</textarea>"
+    "<br>"
+    "<input type='submit' value='Сохранить'>"
+    "</form>"
+    "</div>"
+    "</body>"
+    "</html>";
+  
+  server.send(200, "text/html; charset=UTF-8", html);
+}
+
+void handleConfigSave(ESP8266WebServer& server){
+  String content = String(server.arg("text"));
+
+  File file = LittleFS.open("/config.json", "w");
+  file.print(content);
+  file.close();
+
+  server.sendHeader("Location", "/config");
+  server.send(303);
+}
+
 void setupRoutes(ESP8266WebServer& server) {
   server.on("/", [&server]() {
     handleFileRead("/index.html", server);
@@ -207,5 +246,13 @@ void setupRoutes(ESP8266WebServer& server) {
 
   server.on("/deleteItem", HTTP_POST, [&server]() {
     handleDeleteItem(server);
+  });
+
+  server.on("/config", HTTP_GET, [&server](){
+    handleConfigRead(server);
+  });
+
+  server.on("/saveConfig", HTTP_POST,[&server](){
+    handleConfigSave(server);
   });
 }

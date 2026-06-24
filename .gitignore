@@ -1,3 +1,4 @@
 config.h
 tester.py
 .env
+data/config.json

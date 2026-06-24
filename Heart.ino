@@ -32,7 +32,7 @@ LED green_led = LED(GREEN_LED_PIN, flashing_period_ms, flashing_time_ms);
 
 int ttc_i = 0;
 unsigned long long ttc_prev = 0;
-int ttc_period = 10000;
+int ttc_period = 15000;
 bool ttc_isBegun = false;
 
 void TryToConnect();
@@ -75,6 +75,9 @@ void setup() {
   }
 
   UpdateNetworks();
+  StartSTAMode();
+
+  WiFi.persistent(false);
 
   setupRoutes(server);
 
@@ -95,7 +98,7 @@ void loop() {
   switch(mode){
     case WaitingConnection:
       red_led.Blink(3000, 500);
-      if (CanUpdateAvailableNetworks)
+      if (networks.size() != 0 && CanUpdateAvailableNetworks)
       {
         available_networks = GetFullyAvailableNetworks(networks, FindNetworks());
         CanUpdateAvailableNetworks = false;
@@ -105,8 +108,7 @@ void loop() {
     case Connected:
       green_led.Blink(30000, 500);
       if (WiFi.status() != WL_CONNECTED){
-        CanUpdateAvailableNetworks = true;
-        ChangeMode(WaitingConnection);
+        ESP.restart();
       }        
       break;
     case Settings:
@@ -128,9 +130,7 @@ void SingleClick(){
       ChangeMode(MessageReading);
       break;
     case Settings:
-      ChangeMode(WaitingConnection);
-      StartSTAMode();
-      UpdateNetworks();
+      ESP.restart();
     default:
       break;
   }
@@ -155,25 +155,40 @@ void LongPress(){
   }
 }
 
-void StartAPMode(){
-  WiFi.disconnect(true);
+void StartAPMode() {
+    WiFi.disconnect(false);
+    WiFi.softAPdisconnect(true);
 
-  WiFi.mode(WIFI_AP);
-  WiFi.softAP(ssid, password);
+    delay(100);
 
-  Serial.println(WiFi.softAPIP());
+    WiFi.mode(WIFI_AP);
+    WiFi.softAP(ssid, password);
+
+    ttc_isBegun = false;
+    ttc_i = 0;
 }
 
-void StartSTAMode(){
-  WiFi.softAPdisconnect(true);
-  WiFi.disconnect(true);
+void StartSTAMode()
+{
+    WiFi.mode(WIFI_OFF);
+    delay(500);
 
-  WiFi.mode(WIFI_STA);
-  WiFi.begin(ssid, password);
+    WiFi.mode(WIFI_STA);
+    delay(500);
+
+    WiFi.disconnect(false);
+
+    ttc_isBegun = false;
+    CanUpdateAvailableNetworks = true;
+
+    Serial.println("STA READY");
 }
 
 std::vector<String> FindNetworks() {
     std::vector<std::pair<int, String>> found;
+
+    WiFi.disconnect(false);
+    delay(50);
 
     int n = WiFi.scanNetworks();
 
@@ -222,10 +237,16 @@ std::vector<String> GetFullyAvailableNetworks(std::vector<String> networks_known
 }
 
 void UpdateNetworks(){
-  File file = LittleFS.open("/config.txt", "r");
+  networks.clear();
+  available_networks.clear();
+  
+  ttc_isBegun = false;
+  ttc_i = 0;
+
+  File file = LittleFS.open("/wifi.txt", "r");
 
   if (!file) {
-    Serial.println("Ошибка открытия файла config.txt");
+    Serial.println("Ошибка открытия файла wifi.txt");
   }
 
   while (file.available()) {
@@ -257,7 +278,10 @@ void ChangeMode(Mode new_mode){
 
 void TryToConnect(){
   if (available_networks.size() == 0){
-    CanUpdateAvailableNetworks = true;
+    if (millis() - ttc_prev > ttc_period){
+      CanUpdateAvailableNetworks = true;
+      ttc_prev = millis();
+    }    
     return;
   }
 
@@ -279,8 +303,11 @@ void TryToConnect(){
   }
 
   if (!ttc_isBegun){
-    WiFi.disconnect();
+    WiFi.disconnect(false);
+    delay(100);
+    
     WiFi.begin(available_networks[ttc_i], available_networks[ttc_i + 1]);
+    
     Serial.println("Trying: " + available_networks[ttc_i] + " " + available_networks[ttc_i + 1]);
     ttc_isBegun = true;
   }

@@ -1,0 +1,7 @@
+{
+    "url" : "http://example.com/",
+    "path" : "requests_processing.php/",
+    "private_password" : "example",
+    "ap_ssid" : "HEART",
+    "ap_password" : "12345678"
+}
