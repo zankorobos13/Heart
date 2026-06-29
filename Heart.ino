@@ -4,9 +4,10 @@
 #include <OneButton.h>
 #include <algorithm>
 #include <vector>
+#include <ArduinoJson.h>
 #include "server.h"
 #include "LED.h"
-
+#include "requests.h"
 
 #define RED_LED_PIN 12
 #define BLUE_LED_PIN 13
@@ -17,13 +18,16 @@
 const int flashing_period_ms = 2000;
 const int flashing_time_ms = 500;
 
-const char* ssid = "HEART"; 
-const char* password = "12345678";
+String ssid = "HEART"; 
+String password = "12345678";
+String url;
+String private_password;
+
 
 std::vector<String> networks;
 
 ESP8266WebServer server(80);  
-
+RemoteServer remoteServer("");
 
 OneButton button(BUTTON_PIN, false);
 LED red_led = LED(RED_LED_PIN, flashing_period_ms, flashing_time_ms);
@@ -74,6 +78,27 @@ void setup() {
     Serial.println("FS ERROR");
   }
 
+  File file = LittleFS.open("/config.json", "r");
+
+  JsonDocument doc;
+  DeserializationError error = deserializeJson(doc, file);
+
+  file.close();
+
+  if (error) {
+    Serial.println(error.c_str());
+  }
+  else{
+   // Прописать парсинг дефолтного неизменяемого json`a 
+  }
+
+  ssid = String(doc["ap_ssid"]);
+  password = String(doc["ap_password"]);
+  url = String(doc["url"]) + String(doc["path"]);
+  private_password = String(doc["private_password"]);
+
+  remoteServer = RemoteServer(url);
+
   UpdateNetworks();
   StartSTAMode();
 
@@ -106,11 +131,18 @@ void loop() {
       TryToConnect();
       break;
     case Connected:
+    {
       green_led.Blink(30000, 500);
       if (WiFi.status() != WL_CONNECTED){
         ESP.restart();
-      }        
+        break;
+      }
+      JsonDocument doc = remoteServer.GetMessage(private_password);
+      String json;
+      serializeJson(doc, json);
+      Serial.println(json);
       break;
+    }
     case Settings:
       red_led.Blink(3000, 500);
       green_led.Blink(3000, 500);
