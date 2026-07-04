@@ -19,6 +19,16 @@ class LED{
       
     }
 
+    void BlinkSequence(String seq){
+      for (char c : seq) {
+        if (c == '1')
+          On();
+        else
+          Off();
+        delay(500);
+      }
+    }
+
     void Blink(){
       Blink(usual_blink_period_ms);
     }

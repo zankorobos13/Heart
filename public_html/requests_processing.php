@@ -109,7 +109,8 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST'){
         if ($password_hash === PASSWORD_HASH){
             $message_data = [
                 'is_readed' => false,
-                'message' => $message
+                'message' => $message,
+                'timestamp' => time()
             ];
 
             $json_string = json_encode($message_data, JSON_PRETTY_PRINT | JSON_UNESCAPED_UNICODE);
@@ -128,11 +129,13 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST'){
         if ($password_hash === PASSWORD_HASH){
             $message_data = json_decode(file_get_contents($msg_file_path), true);
             $message = $message_data['message'];
+            $timestamp = $message_data['timestamp'];
 
             $response = [
                 'status' => 'success',
                 'data' => [
-                    'message' => $message
+                    'message' => $message,
+                    'timestamp' => $timestamp
                 ]
             ];
 

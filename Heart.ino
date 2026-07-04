@@ -41,6 +41,9 @@ bool ttc_isBegun = false;
 
 void TryToConnect();
 
+unsigned long long check_msg_prev = 0;
+int check_msg_period = 5000;
+
 enum Mode {
   WaitingConnection,
   Connected,
@@ -61,6 +64,7 @@ std::vector<String> FindNetworks();
 std::vector<String> GetFullyAvailableNetworks(std::vector<String> networks_known, std::vector<String> networks_available);
 void UpdateNetworks();
 void ChangeMode(Mode new_mode);
+JsonDocument GetCurrMessageJson();
 
 void setup() {
   Serial.begin(74880);
@@ -97,6 +101,11 @@ void setup() {
   url = String(doc["url"]) + String(doc["path"]);
   private_password = String(doc["private_password"]);
 
+  if (GetCurrMessageJson()["is_readed"])
+    blue_led.Off();
+  else
+    blue_led.On();
+
   remoteServer = RemoteServer(url);
 
   UpdateNetworks();
@@ -118,10 +127,10 @@ void loop() {
 
   green_led.Off();
   red_led.Off();
-  blue_led.Off();
-
+  
   switch(mode){
     case WaitingConnection:
+    {
       red_led.Blink(3000, 500);
       if (networks.size() != 0 && CanUpdateAvailableNetworks)
       {
@@ -130,24 +139,72 @@ void loop() {
       }
       TryToConnect();
       break;
+    }
     case Connected:
     {
-      green_led.Blink(30000, 500);
+      green_led.Blink(3000, 500);
       if (WiFi.status() != WL_CONNECTED){
         ESP.restart();
         break;
       }
-      JsonDocument doc = remoteServer.GetMessage(private_password);
-      String json;
-      serializeJson(doc, json);
-      Serial.println(json);
+
+      if (millis() - check_msg_prev > check_msg_period){
+        JsonDocument doc = remoteServer.GetMessage(private_password);
+      
+        if (String(doc["status"] == "success") && doc["data"]["timestamp"] != GetCurrMessageJson()["timestamp"]){
+          JsonDocument message;
+          message["message"] = doc["data"]["message"];
+          message["timestamp"] = doc["data"]["timestamp"];
+          message["is_readed"] = false;
+
+          String message_str;
+          serializeJson(message, message_str);
+
+          Serial.println(message_str);
+
+          File file = LittleFS.open("/message.json", "w");
+          file.print(message_str);
+          file.close();
+
+          blue_led.On();
+        }
+
+        check_msg_prev = millis();
+      }      
+
       break;
     }
     case Settings:
+    {
       red_led.Blink(3000, 500);
       green_led.Blink(3000, 500);
       server.handleClient();
       break;
+    }
+    case MessageReading:
+    {
+      blue_led.Off();
+      delay(500);
+      JsonDocument curr_message = GetCurrMessageJson();
+      blue_led.BlinkSequence(String(curr_message["message"]));
+      delay(100);
+      blue_led.Off();
+
+      JsonDocument upd_message;
+      upd_message["message"] = curr_message["message"];
+      upd_message["timestamp"] = curr_message["timestamp"];
+      upd_message["is_readed"] = true;
+
+      String upd_message_str;
+      serializeJson(upd_message, upd_message_str);
+
+      File file = LittleFS.open("/message.json", "w");
+      file.print(upd_message_str);
+      file.close();
+
+      ChangeMode(Connected);
+      break;
+    }
     default:
       break;
 
@@ -159,6 +216,9 @@ void SingleClick(){
   Serial.println("single_click");
   switch (mode){
     case Connected:
+      ChangeMode(MessageReading);
+      break;
+    case WaitingConnection:
       ChangeMode(MessageReading);
       break;
     case Settings:
@@ -301,8 +361,7 @@ void UpdateNetworks(){
 
 void ChangeMode(Mode new_mode){
   green_led.On();
-  red_led.Off();
-  blue_led.Off();
+  red_led.Off(); 
   mode = new_mode;
   delay(500);
   green_led.Off();
@@ -344,4 +403,16 @@ void TryToConnect(){
     ttc_isBegun = true;
   }
 }
+
+JsonDocument GetCurrMessageJson(){
+  File file = LittleFS.open("/message.json", "r");
+
+  JsonDocument doc;
+  deserializeJson(doc, file);
+
+  file.close();
+
+  return doc;
+}
+
 
