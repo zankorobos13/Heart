@@ -87,16 +87,16 @@ void handleSave(ESP8266WebServer& server) {
     file.println(password);
     file.close();
 
-    server.send(200, "text/html; charset=UTF-8", "<h2>Сохранено</h2><h3>SSID: " + ssid + "</h3><h3>PASSWORD:" + password + "</h3><a href='/'>Назад</a>");
+    server.send(200, "text/html; charset=UTF-8", "<link rel=\"stylesheet\" href=\"/save.css\"><h2>Сохранено</h2><br><h3>SSID: " + ssid + "</h3><br><h3>PASSWORD:" + password + "</h3><br><a href='/'>Назад</a>");
   }
   else if (is_ssid_valid == "invalid" || is_password_valid == "invalid"){
-    server.send(200, "text/html; charset=UTF-8", "<h2>SSID или пароль используют недопустимые символы!</h2><h3>Разрешена только латиница, цифры и специальные символы</h3><a href='/'>Назад</a>");
+    server.send(200, "text/html; charset=UTF-8", "<link rel=\"stylesheet\" href=\"/save.css\"><h2>SSID или пароль используют недопустимые символы!</h2><br><h3>Разрешена только латиница, цифры и специальные символы</h3><br><a href='/'>Назад</a>");
   }
   else if (is_ssid_valid == "void" || is_password_valid == "void"){
-    server.send(200, "text/html; charset=UTF-8", "<h2>SSID или пароль не заполнены!</h2><h3>Пожалуйста, заполните поля \"SSID\" и \"Пароль\"</h3><a href='/'>Назад</a>");
+    server.send(200, "text/html; charset=UTF-8", "<link rel=\"stylesheet\" href=\"/save.css\"><h2>SSID или пароль не заполнены!</h2><br><h3>Пожалуйста, заполните поля \"SSID\" и \"Пароль\"</h3><br><a href='/'>Назад</a>");
   }
   else if (is_ssid_valid == "same"){
-    server.send(200, "text/html; charset=UTF-8", "<h2>В списке уже есть WiFi с таким SSID!</h2><h3>Если вы хотите изменить пароль для данного SSID - удалите его из списка и добавьте заново</h3><a href='/'>Назад</a>");
+    server.send(200, "text/html; charset=UTF-8", "<link rel=\"stylesheet\" href=\"/save.css\"><h2>В списке уже есть Wi-Fi с таким SSID!</h2><br><h3>Если вы хотите изменить пароль для данного SSID - удалите его из списка и добавьте заново</h3><br><a href='/'>Назад</a>");
   }
 }
 
@@ -151,7 +151,7 @@ void handleDeletePage(ESP8266WebServer& server) {
   File file = LittleFS.open("/wifi.txt", "r");
 
   String html =
-      "<html><head><meta charset='UTF-8'></head><body>"
+      "<html><head><meta charset='UTF-8'><link rel=\"stylesheet\" href=\"/list.css\"></head><body>"
       "<h2>Сохраненные сети</h2>";
 
   if (!file) {
@@ -194,24 +194,28 @@ void handleConfigRead(ESP8266WebServer& server){
   file.close();
 
   String html =
-    "<!DOCTYPE html>"
-    "<html>"
-    "<head>"
-    "<meta charset='UTF-8'>"
-    "<title>Редактирование config.json</title>"
-    "</head>"
-    "<body>"
-    "<div>"
-    "<form action='/saveConfig' method='POST'>"
-    "<textarea name='text' style='width:100%;height:300px;'>"
-    + content +
-    "</textarea>"
-    "<br>"
-    "<input type='submit' value='Сохранить'>"
-    "</form>"
-    "</div>"
-    "</body>"
-    "</html>";
+  "<!DOCTYPE html>"
+  "<html>"
+  "<head>"
+  "<meta charset='UTF-8'>"
+  "<title>Редактирование config.json</title>"
+  "<link rel='stylesheet' href='/edit_config.css'>"
+  "</head>"
+  "<body>"
+  "<div>"
+  "<h2>Редактирование config.json</h2>"
+  "<form action='/saveConfig' method='POST'>"
+  "<textarea name='text'>"
+  + content +
+  "</textarea>"
+  "<br>"
+  "<input type='submit' value='Сохранить'>"
+  "</form>"
+  "<br>"
+  "<a class='back-btn' href='/'>Назад</a>"
+  "</div>"
+  "</body>"
+  "</html>";
   
   server.send(200, "text/html; charset=UTF-8", html);
 }
@@ -255,4 +259,17 @@ void setupRoutes(ESP8266WebServer& server) {
   server.on("/saveConfig", HTTP_POST,[&server](){
     handleConfigSave(server);
   });
+
+  server.on("/save.css", HTTP_GET, [&]() {
+    handleFileRead("/save.css", server);
+  });
+
+  server.on("/list.css", HTTP_GET, [&]() {
+    handleFileRead("/list.css", server);
+  });
+  
+  server.on("/edit_config.css", HTTP_GET, [&]() {
+    handleFileRead("/edit_config.css", server);
+  });
+  
 }
