@@ -1,0 +1,41 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link rel="stylesheet" href="image_styles.css">
+    <title>Отправка изображения</title>
+</head>
+<body>
+<div class="container">
+<form id="imageForm" action="requests_processing.php" method="post">
+
+    <h1>Панель управления</h1>
+
+    <input type="hidden" name="mode" value="post_message">
+
+    <p>Пароль</p>
+    <input type="password" name="password" placeholder="Пароль">
+
+    <div class="toolbar">
+        <button type="button" id="blackBtn" class="active">⬛ Черный</button>
+        <button type="button" id="whiteBtn">⬜ Белый</button>
+        <button type="button" id="clearBtn">Очистить</button>
+    </div>
+
+    <canvas id="canvas" width="64" height="32"></canvas>
+
+    <input type="hidden" name="message" id="message">
+
+    <br><br>
+    <input type="hidden" name="isImage" id="isImage" value="true">
+    <input type="hidden" name="from" value="image.html">
+    <input type="submit" value="Отправить">
+    <a href="index.html" class="nav-button">
+        Отправить текст
+    </a>
+</form>
+</div>
+<script src="image_script.js" defer></script>
+</body>
+</html>

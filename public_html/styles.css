@@ -137,3 +137,30 @@ textarea::placeholder {
         font-size: 15px;
     }
 }
+
+.nav-button {
+    display: block;
+    width: 100%;
+
+    background: #f3f3f7;
+    color: #333;
+    text-decoration: none;
+    text-align: center;
+
+    padding: 14px 24px;
+    border-radius: 12px;
+
+    font-size: 16px;
+    font-weight: 600;
+    font-family: inherit;
+
+    transition: all 0.2s ease;
+}
+
+.nav-button:hover {
+    background: #ececf7;
+}
+
+.nav-button:active {
+    transform: scale(0.98);
+}
