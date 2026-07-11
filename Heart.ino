@@ -89,17 +89,29 @@ void setup() {
 
   file.close();
 
-  if (error) {
+  if (error || (doc["ap_ssid"].isNull() || doc["ap_password"].isNull() || 
+    doc["url"].isNull() || doc["path"].isNull() || 
+    doc["private_password"].isNull())) {
     Serial.println(error.c_str());
-  }
-  else{
-   // Прописать парсинг дефолтного неизменяемого json`a 
+    file = LittleFS.open("/default_config.json", "r");
+    String content = file.readString();
+
+    JsonDocument doc;
+    DeserializationError error = deserializeJson(doc, file);
+
+    file.close();
+
+    file = LittleFS.open("/config.json", "w");
+    file.println(content);
+    file.close();
   }
 
   ssid = String(doc["ap_ssid"]);
   password = String(doc["ap_password"]);
   url = String(doc["url"]) + String(doc["path"]);
   private_password = String(doc["private_password"]);
+  
+  
 
   if (GetCurrMessageJson()["is_readed"])
     blue_led.Off();

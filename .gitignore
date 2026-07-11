@@ -2,3 +2,4 @@ config.h
 tester.py
 .env
 data/config.json
+data/default_config.json

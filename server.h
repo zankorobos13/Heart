@@ -223,9 +223,30 @@ void handleConfigRead(ESP8266WebServer& server){
 void handleConfigSave(ESP8266WebServer& server){
   String content = String(server.arg("text"));
 
-  File file = LittleFS.open("/config.json", "w");
-  file.print(content);
-  file.close();
+  JsonDocument doc;
+  DeserializationError error = deserializeJson(doc, content);
+
+  if (error || (doc["ap_ssid"].isNull() || doc["ap_password"].isNull() || 
+    doc["url"].isNull() || doc["path"].isNull() || 
+    doc["private_password"].isNull())) {
+    Serial.println(error.c_str());
+    File file = LittleFS.open("/default_config.json", "r");
+    content = file.readString();
+
+    JsonDocument doc;
+    DeserializationError error = deserializeJson(doc, file);
+
+    file.close();
+
+    file = LittleFS.open("/config.json", "w");
+    file.println(content);
+    file.close();
+  }
+  else{
+    File file = LittleFS.open("/config.json", "w");
+    file.print(content);
+    file.close();
+  }
 
   server.sendHeader("Location", "/config");
   server.send(303);
@@ -270,6 +291,5 @@ void setupRoutes(ESP8266WebServer& server) {
   
   server.on("/edit_config.css", HTTP_GET, [&]() {
     handleFileRead("/edit_config.css", server);
-  });
-  
+  });  
 }
