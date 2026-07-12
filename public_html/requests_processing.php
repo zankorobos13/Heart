@@ -46,7 +46,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST'){
     $msg_file_path = __DIR__ . "/../config" . "/" . MSG_FILE_NAME;
 
     if ($mode === 'post_message'){
-        $message = htmlspecialchars(preg_replace('/[\t\n\r\f\v]+/u', '', mb_strtolower($_POST['message'], 'UTF-8')), ENT_QUOTES, 'UTF-8');
+        $message = $_POST['message'];
        
         if ($password_hash === PASSWORD_HASH){
             $message_data = [

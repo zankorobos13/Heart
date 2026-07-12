@@ -98,11 +98,19 @@ clearBtn.onclick=()=>{
 
 document.getElementById("imageForm").onsubmit = function () {
 
-    // Если нужен массив bool:
-    document.getElementById("message").value = JSON.stringify(pixels);
+    const bytes = new Uint8Array(pixels.length / 8);
 
-    // Если нужны 0/1 вместо false/true, то используй:
-    // document.getElementById("message").value =
-    //     JSON.stringify(pixels.map(v => v ? 1 : 0));
+    for (let i = 0; i < pixels.length; i++) {
+        if (pixels[i]) {
+            bytes[i >> 3] |= (1 << (i & 7));
+        }
+    }
 
+    // Кодируем в Base64
+    let binary = "";
+    for (const b of bytes) {
+        binary += String.fromCharCode(b);
+    }
+
+    document.getElementById("message").value = btoa(binary);
 };

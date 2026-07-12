@@ -5,9 +5,11 @@
 #include <algorithm>
 #include <vector>
 #include <ArduinoJson.h>
+#include <base64.hpp>
 #include "server.h"
 #include "LED.h"
 #include "requests.h"
+#include "display.h"
 
 #define RED_LED_PIN 12
 #define BLUE_LED_PIN 13
@@ -28,6 +30,7 @@ std::vector<String> networks;
 
 ESP8266WebServer server(80);  
 RemoteServer remoteServer("");
+Display display;
 
 OneButton button(BUTTON_PIN, false);
 LED red_led = LED(RED_LED_PIN, flashing_period_ms, flashing_time_ms);
@@ -65,6 +68,7 @@ std::vector<String> GetFullyAvailableNetworks(std::vector<String> networks_known
 void UpdateNetworks();
 void ChangeMode(Mode new_mode);
 JsonDocument GetCurrMessageJson();
+std::vector<bool> decodeBase64ToBoolVector(const String& base64);
 
 void setup() {
   Serial.begin(74880);
@@ -167,12 +171,11 @@ void loop() {
           JsonDocument message;
           message["message"] = doc["data"]["message"];
           message["timestamp"] = doc["data"]["timestamp"];
+          message["is_image"] = doc["data"]["is_image"];
           message["is_readed"] = false;
 
           String message_str;
           serializeJson(message, message_str);
-
-          Serial.println(message_str);
 
           File file = LittleFS.open("/message.json", "w");
           file.print(message_str);
@@ -197,9 +200,18 @@ void loop() {
     {
       blue_led.Off();
       delay(500);
+      blue_led.On();
+
       JsonDocument curr_message = GetCurrMessageJson();
-      blue_led.BlinkSequence(String(curr_message["message"]));
-      delay(100);
+      if (String(curr_message["is_image"]) == "false"){
+        display.PrintString(String(curr_message["message"]));
+      }
+      else{
+        String encoded = String(curr_message["message"]);
+        display.PrintImage(decodeBase64ToBoolVector(encoded));
+      }
+      
+      delay(3000);
       blue_led.Off();
 
       JsonDocument upd_message;
@@ -427,4 +439,27 @@ JsonDocument GetCurrMessageJson(){
   return doc;
 }
 
+std::vector<bool> decodeBase64ToBoolVector(const String &str)
+{
+    unsigned int decodedLen =
+        decode_base64_length((const unsigned char*)str.c_str(), str.length());
 
+    std::vector<unsigned char> bytes(decodedLen);
+
+    decode_base64(
+        (const unsigned char*)str.c_str(),
+        str.length(),
+        bytes.data()
+    );
+
+    std::vector<bool> result;
+    result.reserve(bytes.size() * 8);
+
+    for (size_t i = 0; i < bytes.size(); i++) {
+        for (int b = 0; b < 8; b++) {    
+            result.push_back((bytes[i] >> b) & 1);
+        }
+    }
+
+    return result;
+}
