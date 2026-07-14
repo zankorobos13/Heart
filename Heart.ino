@@ -15,12 +15,12 @@
 #define BLUE_LED_PIN 13
 #define GREEN_LED_PIN 14
 
-#define BUTTON_PIN 4
+#define BUTTON_PIN 16
 
 const int flashing_period_ms = 2000;
 const int flashing_time_ms = 500;
 
-String ssid = "HEART"; 
+String ssid = "HEART";
 String password = "12345678";
 String url;
 String private_password;
@@ -28,7 +28,7 @@ String private_password;
 
 std::vector<String> networks;
 
-ESP8266WebServer server(80);  
+ESP8266WebServer server(80);
 RemoteServer remoteServer("");
 Display display;
 
@@ -93,9 +93,7 @@ void setup() {
 
   file.close();
 
-  if (error || (doc["ap_ssid"].isNull() || doc["ap_password"].isNull() || 
-    doc["url"].isNull() || doc["path"].isNull() || 
-    doc["private_password"].isNull())) {
+  if (error || (doc["ap_ssid"].isNull() || doc["ap_password"].isNull() || doc["url"].isNull() || doc["path"].isNull() || doc["private_password"].isNull())) {
     Serial.println(error.c_str());
     file = LittleFS.open("/default_config.json", "r");
     String content = file.readString();
@@ -114,8 +112,8 @@ void setup() {
   password = String(doc["ap_password"]);
   url = String(doc["url"]) + String(doc["path"]);
   private_password = String(doc["private_password"]);
-  
-  
+
+
 
   if (GetCurrMessageJson()["is_readed"])
     blue_led.Off();
@@ -132,113 +130,113 @@ void setup() {
   setupRoutes(server);
 
   server.begin();
+  display.Begin();
 }
 
 void loop() {
   button.tick();
-  if (mode != prev_mode){
+  if (mode != prev_mode) {
     Serial.println("Режим: " + String(mode));
     prev_mode = mode;
   }
 
   green_led.Off();
   red_led.Off();
-  
-  switch(mode){
+
+  switch (mode) {
     case WaitingConnection:
-    {
-      red_led.Blink(3000, 500);
-      if (networks.size() != 0 && CanUpdateAvailableNetworks)
       {
-        available_networks = GetFullyAvailableNetworks(networks, FindNetworks());
-        CanUpdateAvailableNetworks = false;
-      }
-      TryToConnect();
-      break;
-    }
-    case Connected:
-    {
-      green_led.Blink(3000, 500);
-      if (WiFi.status() != WL_CONNECTED){
-        ESP.restart();
+        red_led.Blink(3000, 500);
+        if (networks.size() != 0 && CanUpdateAvailableNetworks) {
+          available_networks = GetFullyAvailableNetworks(networks, FindNetworks());
+          CanUpdateAvailableNetworks = false;
+        }
+        TryToConnect();
         break;
       }
-
-      if (millis() - check_msg_prev > check_msg_period){
-        JsonDocument doc = remoteServer.GetMessage(private_password);
-      
-        if (String(doc["status"] == "success") && doc["data"]["timestamp"] != GetCurrMessageJson()["timestamp"]){
-          JsonDocument message;
-          message["message"] = doc["data"]["message"];
-          message["timestamp"] = doc["data"]["timestamp"];
-          message["is_image"] = doc["data"]["is_image"];
-          message["is_readed"] = false;
-
-          String message_str;
-          serializeJson(message, message_str);
-
-          File file = LittleFS.open("/message.json", "w");
-          file.print(message_str);
-          file.close();
-
-          blue_led.On();
+    case Connected:
+      {
+        green_led.Blink(3000, 500);
+        if (WiFi.status() != WL_CONNECTED) {
+          ESP.restart();
+          break;
         }
 
-        check_msg_prev = millis();
-      }      
+        if (millis() - check_msg_prev > check_msg_period) {
+          JsonDocument doc = remoteServer.GetMessage(private_password);
 
-      break;
-    }
+          if (String(doc["status"] == "success") && doc["data"]["timestamp"] != GetCurrMessageJson()["timestamp"]) {
+            JsonDocument message;
+            message["message"] = doc["data"]["message"];
+            message["timestamp"] = doc["data"]["timestamp"];
+            message["is_image"] = doc["data"]["is_image"];
+            message["is_readed"] = false;
+
+            String message_str;
+            serializeJson(message, message_str);
+
+            File file = LittleFS.open("/message.json", "w");
+            file.print(message_str);
+            file.close();
+
+            blue_led.On();
+          }
+
+          check_msg_prev = millis();
+        }
+
+        break;
+      }
     case Settings:
-    {
-      red_led.Blink(3000, 500);
-      green_led.Blink(3000, 500);
-      server.handleClient();
-      break;
-    }
+      {
+        red_led.Blink(3000, 500);
+        green_led.Blink(3000, 500);
+        server.handleClient();
+        break;
+      }
     case MessageReading:
-    {
-      blue_led.Off();
-      delay(500);
-      blue_led.On();
+      {
+        blue_led.Off();
+        delay(500);
+        blue_led.On();
 
-      JsonDocument curr_message = GetCurrMessageJson();
-      if (String(curr_message["is_image"]) == "false"){
-        display.PrintString(String(curr_message["message"]));
+        JsonDocument curr_message = GetCurrMessageJson();
+        if (String(curr_message["is_image"]) == "false") {
+          display.PrintString(String(curr_message["message"]));
+          Serial.println(String(curr_message["message"]));
+        } else {
+          String encoded = String(curr_message["message"]);
+          display.PrintImage(decodeBase64ToBoolVector(encoded));
+        }
+
+        delay(5000);
+        display.Clear();
+        blue_led.Off();
+
+        JsonDocument upd_message;
+        upd_message["message"] = curr_message["message"];
+        upd_message["timestamp"] = curr_message["timestamp"];
+        upd_message["is_image"] = curr_message["is_image"];
+        upd_message["is_readed"] = true;
+
+        String upd_message_str;
+        serializeJson(upd_message, upd_message_str);
+
+        File file = LittleFS.open("/message.json", "w");
+        file.print(upd_message_str);
+        file.close();
+
+        ChangeMode(Connected);
+        break;
       }
-      else{
-        String encoded = String(curr_message["message"]);
-        display.PrintImage(decodeBase64ToBoolVector(encoded));
-      }
-      
-      delay(3000);
-      blue_led.Off();
-
-      JsonDocument upd_message;
-      upd_message["message"] = curr_message["message"];
-      upd_message["timestamp"] = curr_message["timestamp"];
-      upd_message["is_readed"] = true;
-
-      String upd_message_str;
-      serializeJson(upd_message, upd_message_str);
-
-      File file = LittleFS.open("/message.json", "w");
-      file.print(upd_message_str);
-      file.close();
-
-      ChangeMode(Connected);
-      break;
-    }
     default:
       break;
-
   }
-  
 }
 
-void SingleClick(){
+void SingleClick() {
   Serial.println("single_click");
-  switch (mode){
+  switch (mode) {
     case Connected:
       ChangeMode(MessageReading);
       break;
@@ -252,9 +250,9 @@ void SingleClick(){
   }
 }
 
-void LongPress(){
+void LongPress() {
   Serial.println("long_press");
-  switch (mode){
+  switch (mode) {
     case MessageReading:
       ChangeMode(Connected);
       break;
@@ -272,90 +270,85 @@ void LongPress(){
 }
 
 void StartAPMode() {
-    WiFi.disconnect(false);
-    WiFi.softAPdisconnect(true);
+  WiFi.disconnect(false);
+  WiFi.softAPdisconnect(true);
 
-    delay(100);
+  delay(100);
 
-    WiFi.mode(WIFI_AP);
-    WiFi.softAP(ssid, password);
+  WiFi.mode(WIFI_AP);
+  WiFi.softAP(ssid, password);
 
-    ttc_isBegun = false;
-    ttc_i = 0;
+  ttc_isBegun = false;
+  ttc_i = 0;
 }
 
-void StartSTAMode()
-{
-    WiFi.mode(WIFI_OFF);
-    delay(500);
+void StartSTAMode() {
+  WiFi.mode(WIFI_OFF);
+  delay(500);
 
-    WiFi.mode(WIFI_STA);
-    delay(500);
+  WiFi.mode(WIFI_STA);
+  delay(500);
 
-    WiFi.disconnect(false);
+  WiFi.disconnect(false);
 
-    ttc_isBegun = false;
-    CanUpdateAvailableNetworks = true;
+  ttc_isBegun = false;
+  CanUpdateAvailableNetworks = true;
 
-    Serial.println("STA READY");
+  Serial.println("STA READY");
 }
 
 std::vector<String> FindNetworks() {
-    std::vector<std::pair<int, String>> found;
+  std::vector<std::pair<int, String>> found;
 
-    WiFi.disconnect(false);
-    delay(50);
+  WiFi.disconnect(false);
+  delay(50);
 
-    int n = WiFi.scanNetworks();
+  int n = WiFi.scanNetworks();
 
-    if (n <= 0) {
-        Serial.println("Networks not found");
-        return {};
-    }
+  if (n <= 0) {
+    Serial.println("Networks not found");
+    return {};
+  }
 
-    for (int i = 0; i < n; i++) {
-        found.push_back({
-            WiFi.RSSI(i),
-            WiFi.SSID(i)
-        });
-    }
+  for (int i = 0; i < n; i++) {
+    found.push_back({ WiFi.RSSI(i),
+                      WiFi.SSID(i) });
+  }
 
-    std::sort(
-        found.begin(),
-        found.end(),
-        [](const auto& a, const auto& b) {
-            return a.first > b.first;
-        }
-    );
+  std::sort(
+    found.begin(),
+    found.end(),
+    [](const auto& a, const auto& b) {
+      return a.first > b.first;
+    });
 
-    std::vector<String> result;
+  std::vector<String> result;
 
-    for (const auto& net : found) {
-        result.push_back(net.second);
-        // Serial.println("FOUND: " + net.second);
-    }
+  for (const auto& net : found) {
+    result.push_back(net.second);
+    // Serial.println("FOUND: " + net.second);
+  }
 
-    return result;
+  return result;
 }
 
-std::vector<String> GetFullyAvailableNetworks(std::vector<String> networks_known, std::vector<String> networks_available){
+std::vector<String> GetFullyAvailableNetworks(std::vector<String> networks_known, std::vector<String> networks_available) {
   std::vector<String> result;
-  for (int i = 0; i < networks_available.size(); i++){
-    for (int j = 0; j < networks_known.size(); j+=2){
-      if (networks_available[i] == networks_known[j]){
+  for (int i = 0; i < networks_available.size(); i++) {
+    for (int j = 0; j < networks_known.size(); j += 2) {
+      if (networks_available[i] == networks_known[j]) {
         result.push_back(networks_known[j]);
-        result.push_back(networks_known[j+1]);
-        
+        result.push_back(networks_known[j + 1]);
       }
     }
   }
   return result;
 }
 
-void UpdateNetworks(){
+void UpdateNetworks() {
   networks.clear();
   available_networks.clear();
-  
+
   ttc_isBegun = false;
   ttc_i = 0;
 
@@ -370,11 +363,11 @@ void UpdateNetworks(){
     line.trim();
 
     if (line.length() > 0) {
-        networks.push_back(line);
+      networks.push_back(line);
     }
   }
 
-  for (int i = 0; i < networks.size(); i+=2){
+  for (int i = 0; i < networks.size(); i += 2) {
     Serial.print(networks[i]);
     Serial.print(" - ");
     Serial.println(networks[i + 1]);
@@ -383,33 +376,33 @@ void UpdateNetworks(){
   file.close();
 }
 
-void ChangeMode(Mode new_mode){
+void ChangeMode(Mode new_mode) {
   green_led.On();
-  red_led.Off(); 
+  red_led.Off();
   mode = new_mode;
   delay(500);
   green_led.Off();
 }
 
-void TryToConnect(){
-  if (available_networks.size() == 0){
-    if (millis() - ttc_prev > ttc_period){
+void TryToConnect() {
+  if (available_networks.size() == 0) {
+    if (millis() - ttc_prev > ttc_period) {
       CanUpdateAvailableNetworks = true;
       ttc_prev = millis();
-    }    
+    }
     return;
   }
 
-  if (WiFi.status() == WL_CONNECTED){
+  if (WiFi.status() == WL_CONNECTED) {
     Serial.println("CONNECTED!");
     ChangeMode(Connected);
     return;
   }
-   
-  if (millis() - ttc_prev > ttc_period){
+
+  if (millis() - ttc_prev > ttc_period) {
     if (ttc_i + 2 < available_networks.size())
       ttc_i += 2;
-    else{
+    else {
       ttc_i = 0;
       CanUpdateAvailableNetworks = true;
     }
@@ -417,18 +410,18 @@ void TryToConnect(){
     ttc_prev = millis();
   }
 
-  if (!ttc_isBegun){
+  if (!ttc_isBegun) {
     WiFi.disconnect(false);
     delay(100);
-    
+
     WiFi.begin(available_networks[ttc_i], available_networks[ttc_i + 1]);
-    
+
     Serial.println("Trying: " + available_networks[ttc_i] + " " + available_networks[ttc_i + 1]);
     ttc_isBegun = true;
   }
 }
 
-JsonDocument GetCurrMessageJson(){
+JsonDocument GetCurrMessageJson() {
   File file = LittleFS.open("/message.json", "r");
 
   JsonDocument doc;
@@ -439,27 +432,25 @@ JsonDocument GetCurrMessageJson(){
   return doc;
 }
 
-std::vector<bool> decodeBase64ToBoolVector(const String &str)
-{
-    unsigned int decodedLen =
-        decode_base64_length((const unsigned char*)str.c_str(), str.length());
+std::vector<bool> decodeBase64ToBoolVector(const String& str) {
+  unsigned int decodedLen =
+    decode_base64_length((const unsigned char*)str.c_str(), str.length());
 
-    std::vector<unsigned char> bytes(decodedLen);
+  std::vector<unsigned char> bytes(decodedLen);
 
-    decode_base64(
-        (const unsigned char*)str.c_str(),
-        str.length(),
-        bytes.data()
-    );
+  decode_base64(
+    (const unsigned char*)str.c_str(),
+    str.length(),
+    bytes.data());
 
-    std::vector<bool> result;
-    result.reserve(bytes.size() * 8);
+  std::vector<bool> result;
+  result.reserve(bytes.size() * 8);
 
-    for (size_t i = 0; i < bytes.size(); i++) {
-        for (int b = 0; b < 8; b++) {    
-            result.push_back((bytes[i] >> b) & 1);
-        }
+  for (size_t i = 0; i < bytes.size(); i++) {
+    for (int b = 0; b < 8; b++) {
+      result.push_back((bytes[i] >> b) & 1);
     }
+  }
 
-    return result;
+  return result;
 }

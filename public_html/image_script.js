@@ -113,4 +113,4 @@ document.getElementById("imageForm").onsubmit = function () {
     }
 
     document.getElementById("message").value = btoa(binary);
-};
+};  

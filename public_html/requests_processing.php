@@ -24,6 +24,11 @@ function validatePassword($password) {
     return preg_match('/^[a-zA-Z0-9!@#$%^&*()_+\-=\[\]{};:,.?\/\\|`~]+$/', $password);
 }
 
+function validateMessage($message) {
+    // Только латиница, цифры, и спец символы
+    return preg_match('/^[a-zA-Z0-9!@#$%^&*()_+\-=\[\]{};:,.?\/\\|`~]+$/', $message);
+}
+
 if ($_SERVER['REQUEST_METHOD'] === 'POST'){
     if (array_key_exists('mode', $_POST) && !validatePassword($_POST['mode'])){
         echo "<script>
@@ -34,12 +39,19 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST'){
     }
     if (array_key_exists('password', $_POST) && !validatePassword($_POST['password'])){
         echo "<script>
-                alert('Недопустимые символы в поле \"Пароль\". Разрешены только латинские буквы, цифры, и спец символы');
+                alert('Недопустимые символы в поле \"Пароль\". Разрешены только латинские буквы, цифры, и спецсимволы');
                 window.location.href = '".$_POST['from']."';
             </script>";
         exit;
     }
-    
+    if (array_key_exists('message', $_POST) && !validateMessage($_POST['message'])){
+        echo "<script>
+                alert('Недопустимые символы в поле \"Сообщение\". Разрешены только латинские буквы, цифры, и спецсимволы');
+                window.location.href = '".$_POST['from']."';
+            </script>";
+        exit;
+    }
+
     $mode = htmlspecialchars($_POST['mode'], ENT_QUOTES, 'UTF-8');
     $password = htmlspecialchars($_POST['password'], ENT_QUOTES, 'UTF-8');
     $password_hash = hash('sha256', $password);
