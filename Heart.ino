@@ -72,6 +72,7 @@ std::vector<bool> decodeBase64ToBoolVector(const String& base64);
 
 void setup() {
   Serial.begin(74880);
+  display.Begin();
 
   pinMode(RED_LED_PIN, OUTPUT);
   pinMode(BLUE_LED_PIN, OUTPUT);
@@ -84,6 +85,7 @@ void setup() {
 
   if (!LittleFS.begin()) {
     Serial.println("FS ERROR");
+    display.PrintError("FS ERROR");
   }
 
   File file = LittleFS.open("/config.json", "r");
@@ -95,6 +97,8 @@ void setup() {
 
   if (error || (doc["ap_ssid"].isNull() || doc["ap_password"].isNull() || doc["url"].isNull() || doc["path"].isNull() || doc["private_password"].isNull())) {
     Serial.println(error.c_str());
+    display.PrintError(error.c_str());
+
     file = LittleFS.open("/default_config.json", "r");
     String content = file.readString();
 
@@ -130,7 +134,9 @@ void setup() {
   setupRoutes(server);
 
   server.begin();
-  display.Begin();
+
+  Serial.println("Server started");
+  display.PrintInfo("Server started");
 }
 
 void loop() {
@@ -196,6 +202,7 @@ void loop() {
       }
     case MessageReading:
       {
+        display.Clear();
         blue_led.Off();
         delay(500);
         blue_led.On();
@@ -280,6 +287,9 @@ void StartAPMode() {
 
   ttc_isBegun = false;
   ttc_i = 0;
+
+  Serial.println("AP started");
+  display.PrintInfo("AP started");
 }
 
 void StartSTAMode() {
@@ -294,7 +304,8 @@ void StartSTAMode() {
   ttc_isBegun = false;
   CanUpdateAvailableNetworks = true;
 
-  Serial.println("STA READY");
+  Serial.println("STA ready");
+  display.PrintInfo("STA ready");
 }
 
 std::vector<String> FindNetworks() {
@@ -311,8 +322,7 @@ std::vector<String> FindNetworks() {
   }
 
   for (int i = 0; i < n; i++) {
-    found.push_back({ WiFi.RSSI(i),
-                      WiFi.SSID(i) });
+    found.push_back({ WiFi.RSSI(i), WiFi.SSID(i) });
   }
 
   std::sort(
@@ -326,7 +336,6 @@ std::vector<String> FindNetworks() {
 
   for (const auto& net : found) {
     result.push_back(net.second);
-    // Serial.println("FOUND: " + net.second);
   }
 
   return result;
@@ -356,6 +365,7 @@ void UpdateNetworks() {
 
   if (!file) {
     Serial.println("Ошибка открытия файла wifi.txt");
+    display.PrintError("wifi.txt OPEN ERROR");
   }
 
   while (file.available()) {
@@ -395,6 +405,7 @@ void TryToConnect() {
 
   if (WiFi.status() == WL_CONNECTED) {
     Serial.println("CONNECTED!");
+    display.PrintInfo("CONNECTED!");
     ChangeMode(Connected);
     return;
   }

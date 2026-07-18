@@ -71,4 +71,16 @@ public:
         display.clearDisplay();
         display.display();
     }
+
+    void PrintError(const String &err){
+        PrintString("==========\n" + err + "\n==========");
+        delay(3000);
+        Clear();
+    }
+
+    void PrintInfo(const String &err){
+        PrintString("++++++++++\n" + err + "\n++++++++++");
+        delay(1500);
+        Clear();
+    }
 };
