@@ -226,9 +226,24 @@ void handleConfigSave(ESP8266WebServer& server){
   JsonDocument doc;
   DeserializationError error = deserializeJson(doc, content);
 
-  if (error || (doc["ap_ssid"].isNull() || doc["ap_password"].isNull() || 
-    doc["url"].isNull() || doc["path"].isNull() || 
-    doc["private_password"].isNull())) {
+  bool invalid =
+    error ||
+    doc["ap_ssid"].isNull() ||
+    doc["ap_password"].isNull() ||
+    doc["url"].isNull() ||
+    doc["path"].isNull() ||
+    doc["private_password"].isNull() ||
+
+    !doc["green_led_blink_period"].is<int>() ||
+    !doc["green_led_blink_time"].is<int>() ||
+
+    doc["green_led_blink_period"].as<int>() <= 0 ||
+    doc["green_led_blink_time"].as<int>() <= 0 ||
+
+    doc["green_led_blink_period"].as<int>() <=
+        doc["green_led_blink_time"].as<int>();
+
+  if (invalid) {
     Serial.println(error.c_str());
     File file = LittleFS.open("/default_config.json", "r");
     content = file.readString();

@@ -20,6 +20,9 @@
 const int flashing_period_ms = 2000;
 const int flashing_time_ms = 500;
 
+int green_led_blink_period;
+int green_led_blink_time;
+
 String ssid = "HEART";
 String password = "12345678";
 String url;
@@ -95,7 +98,24 @@ void setup() {
 
   file.close();
 
-  if (error || (doc["ap_ssid"].isNull() || doc["ap_password"].isNull() || doc["url"].isNull() || doc["path"].isNull() || doc["private_password"].isNull())) {
+  bool invalid =
+    error ||
+    doc["ap_ssid"].isNull() ||
+    doc["ap_password"].isNull() ||
+    doc["url"].isNull() ||
+    doc["path"].isNull() ||
+    doc["private_password"].isNull() ||
+
+    !doc["green_led_blink_period"].is<int>() ||
+    !doc["green_led_blink_time"].is<int>() ||
+
+    doc["green_led_blink_period"].as<int>() <= 0 ||
+    doc["green_led_blink_time"].as<int>() <= 0 ||
+
+    doc["green_led_blink_period"].as<int>() <=
+        doc["green_led_blink_time"].as<int>();
+
+  if (invalid) {
     Serial.println(error.c_str());
     display.PrintError(error.c_str());
 
@@ -116,7 +136,8 @@ void setup() {
   password = String(doc["ap_password"]);
   url = String(doc["url"]) + String(doc["path"]);
   private_password = String(doc["private_password"]);
-
+  green_led_blink_period = doc["green_led_blink_period"].as<int>();
+  green_led_blink_time = doc["green_led_blink_time"].as<int>();
 
 
   if (GetCurrMessageJson()["is_readed"])
@@ -162,7 +183,7 @@ void loop() {
       }
     case Connected:
       {
-        green_led.Blink(3000, 500);
+        green_led.Blink(green_led_blink_period, green_led_blink_time);
         if (WiFi.status() != WL_CONNECTED) {
           ESP.restart();
           break;

@@ -3,5 +3,7 @@
     "path" : "requests_processing.php/",
     "private_password" : "example",
     "ap_ssid" : "HEART",
-    "ap_password" : "12345678"
+    "ap_password" : "12345678",
+    "green_led_blink_period" : 60000,
+    "green_led_blink_time" : 100
 }
