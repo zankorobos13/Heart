@@ -23,7 +23,7 @@ function validatePassword($password) {
 
 function validateMessage($message) {
     // Только латиница, цифры, и спец символы
-    return preg_match('/^[a-zA-Z0-9!@#$%^&*()_+\-=\[\]{};:,.?\/\\|`~]+$/', $message);
+    return preg_match('/^[[:alnum:]!@#$%^&*()_+\-=\[\]{};:,.?\/\\|`~ ]+$/', $message);
 }
 
 if ($_SERVER['REQUEST_METHOD'] === 'POST'){
