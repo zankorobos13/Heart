@@ -4,6 +4,9 @@ class LED{
     int usual_blink_period_ms;
     int usual_blink_duration_ms;
     int prev_ms;
+    uint8_t brightness = 255;
+
+    static const uint16_t pwm_period_us = 1000;
   public:
     LED(){}
 
@@ -17,6 +20,10 @@ class LED{
       Serial.println(this->usual_blink_duration_ms);
       Serial.println(this->prev_ms);
       
+    }
+
+    void SetBrightness(uint8_t value){
+      brightness = value;
     }
 
     void BlinkSequence(String seq){
@@ -38,14 +45,30 @@ class LED{
     }
 
     void Blink(int blink_period_ms, int blink_duration_ms){
-      int ms = millis();
-      if (ms - prev_ms >= blink_period_ms - blink_duration_ms){
-        On();
+      unsigned long ms = millis();
+
+      unsigned long elapsed = ms - prev_ms;
+
+      if (elapsed >= blink_period_ms){
+          prev_ms = ms;
+          elapsed = 0;
       }
-      if (ms - prev_ms >= blink_period_ms){
-        Off();
-        prev_ms = ms;
+
+      bool ledEnabled = elapsed >= (blink_period_ms - blink_duration_ms);
+
+      if (!ledEnabled){
+          digitalWrite(pin, LOW);
+          return;
       }
+
+      unsigned long pwmTime = micros() % pwm_period_us;
+
+      uint32_t onTime = (uint32_t)pwm_period_us * brightness / 255;
+
+      if (pwmTime < onTime)
+          digitalWrite(pin, HIGH);
+      else
+          digitalWrite(pin, LOW);
     }
 
     void On(){

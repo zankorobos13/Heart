@@ -61,6 +61,7 @@ Mode mode = WaitingConnection;
 Mode prev_mode = mode;
 
 bool CanUpdateAvailableNetworks = true;
+bool isReaded;
 
 std::vector<String> available_networks;
 
@@ -81,6 +82,10 @@ void setup() {
   pinMode(BLUE_LED_PIN, OUTPUT);
   pinMode(GREEN_LED_PIN, OUTPUT);
   pinMode(BUTTON_PIN, INPUT);
+
+  red_led.SetBrightness(10);
+  green_led.SetBrightness(10);
+  blue_led.SetBrightness(10);
 
   button.attachClick(SingleClick);
   button.attachLongPressStart(LongPress);
@@ -139,11 +144,11 @@ void setup() {
   green_led_blink_period = doc["green_led_blink_period"].as<int>();
   green_led_blink_time = doc["green_led_blink_time"].as<int>();
 
-
-  if (GetCurrMessageJson()["is_readed"])
-    blue_led.Off();
-  else
-    blue_led.On();
+  isReaded = GetCurrMessageJson()["is_readed"];
+  // if (GetCurrMessageJson()["is_readed"])
+  //   blue_led.Off();
+  // else
+  //   blue_led.On();
 
   remoteServer = RemoteServer(url);
 
@@ -161,6 +166,11 @@ void setup() {
 }
 
 void loop() {
+  if (isReaded)
+    blue_led.Off();
+  else
+    blue_led.Blink(1000, 1000);
+
   button.tick();
   if (mode != prev_mode) {
     Serial.println("Режим: " + String(mode));
@@ -199,6 +209,8 @@ void loop() {
             message["is_image"] = doc["data"]["is_image"];
             message["is_readed"] = false;
 
+            isReaded = false;
+
             String message_str;
             serializeJson(message, message_str);
 
@@ -206,7 +218,7 @@ void loop() {
             file.print(message_str);
             file.close();
 
-            blue_led.On();
+            //blue_led.On();
           }
 
           check_msg_prev = millis();
@@ -224,9 +236,9 @@ void loop() {
     case MessageReading:
       {
         display.Clear();
-        blue_led.Off();
-        delay(500);
-        blue_led.On();
+        // blue_led.Off();
+        // delay(500);
+        // blue_led.On();
 
         JsonDocument curr_message = GetCurrMessageJson();
         if (String(curr_message["is_image"]) == "false") {
@@ -239,13 +251,15 @@ void loop() {
 
         delay(5000);
         display.Clear();
-        blue_led.Off();
+        //blue_led.Off();
 
         JsonDocument upd_message;
         upd_message["message"] = curr_message["message"];
         upd_message["timestamp"] = curr_message["timestamp"];
         upd_message["is_image"] = curr_message["is_image"];
         upd_message["is_readed"] = true;
+
+        isReaded = true;
 
         String upd_message_str;
         serializeJson(upd_message, upd_message_str);
@@ -408,11 +422,7 @@ void UpdateNetworks() {
 }
 
 void ChangeMode(Mode new_mode) {
-  green_led.On();
-  red_led.Off();
   mode = new_mode;
-  delay(500);
-  green_led.Off();
 }
 
 void TryToConnect() {
